@@ -14,6 +14,7 @@
 // @run-at       document-end
 // @downloadURL  https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-tester.user.js
 // @updateURL    https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-tester.user.js
+// @license      Apache-2.0
 // ==/UserScript==
 
 (function () {
