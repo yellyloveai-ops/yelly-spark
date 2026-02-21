@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0.0
 // @description  Build & test AI prompts with placeholder substitution, then invoke Claude or other agents
-// @author       You
+// @author       yellyloveai-ops
 // @match        http://*/*
 // @match        https://*/*
 // @grant        GM_xmlhttpRequest
@@ -12,6 +12,8 @@
 // @grant        GM_addStyle
 // @connect      api.anthropic.com
 // @run-at       document-end
+// @downloadURL  https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-tester.user.js
+// @updateURL    https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-tester.user.js
 // ==/UserScript==
 
 (function () {
