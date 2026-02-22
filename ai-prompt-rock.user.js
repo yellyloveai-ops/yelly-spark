@@ -1149,13 +1149,17 @@
 
     _runPrompt(promptObj) {
       const template = promptObj.prompt || '';
+      const selection = window.getSelection().toString().trim();
       const placeholders = Utils.parsePlaceholders(template);
       const hintMap = this._getPlaceholderHintMap(promptObj);
 
       if (placeholders.length === 0) {
-        this._dispatch(template);
+        const prompt = selection
+          ? `${template}\n\n---\nContext (selected text):\n${selection}`
+          : template;
+        this._dispatch(prompt);
       } else {
-        this._openFillDialog(template, placeholders, hintMap, promptObj);
+        this._openFillDialog(template, placeholders, hintMap, promptObj, selection);
       }
     }
 
@@ -1367,7 +1371,7 @@
     // FILL DIALOG
     // ═══════════════════════════════════════════════════════════════════════
 
-    _openFillDialog(template, placeholders, hintMap = {}, promptMeta = null) {
+    _openFillDialog(template, placeholders, hintMap = {}, promptMeta = null, selection = '') {
       const dlg = document.createElement('div');
       dlg.className = 'apt-dialog';
 
@@ -1402,6 +1406,11 @@
             ? `<div style="font-size:10px;color:#6c7086;margin-bottom:8px">include: ${Utils.escapeHtml(promptMeta.include.join(', ') || '-')} · exclude: ${Utils.escapeHtml(promptMeta.exclude.join(', ') || '-')}</div>`
             : ''}
           <div id="apt-preview-box">${Utils.buildPreviewHtml(template, {})}</div>
+          ${selection && !placeholders.includes('selected_text')
+            ? `<div style="margin-top:8px;padding:6px 8px;background:rgba(166,227,161,.08);border:1px solid rgba(166,227,161,.25);border-radius:6px;font-size:11px;color:#a6e3a1;display:flex;align-items:center;gap:6px;">
+                <span>📌</span><span>Selected text (${selection.length} chars) will be appended as context</span>
+               </div>`
+            : ''}
         </div>
         <div class="apt-dialog-footer">
           <button class="apt-dbtn apt-dbtn-cancel" id="apt-fill-cancel">Cancel</button>
@@ -1435,6 +1444,15 @@
         return v;
       };
 
+      // Pre-fill {{selected_text}} placeholder with page selection
+      if (selection) {
+        const selInput = dlg.querySelector(`.apt-field-input[data-ph="${encodeURIComponent('selected_text')}"]`);
+        if (selInput) {
+          selInput.value = selection;
+          setHTML(dlg.querySelector('#apt-preview-box'), Utils.buildPreviewHtml(template, getValues()));
+        }
+      }
+
       // Live preview update
       dlg.querySelectorAll('.apt-field-input[data-ph]').forEach(inp => {
         inp.addEventListener('input', () => {
@@ -1445,8 +1463,11 @@
       const doSubmit = () => {
         const values = getValues();
         const filled = Utils.fillTemplate(template, values);
+        const finalPrompt = (selection && !placeholders.includes('selected_text'))
+          ? `${filled}\n\n---\nContext (selected text):\n${selection}`
+          : filled;
         ov.remove();
-        this._dispatch(filled);
+        this._dispatch(finalPrompt);
       };
 
       dlg.querySelector('#apt-fill-cancel').addEventListener('click', () => ov.remove());
