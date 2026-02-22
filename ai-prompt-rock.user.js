@@ -1743,7 +1743,6 @@
       ov.className = 'apt-overlay';
       ov.appendChild(contentEl);
       this._shadow.appendChild(ov);
-      ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
       return ov;
     }
 
