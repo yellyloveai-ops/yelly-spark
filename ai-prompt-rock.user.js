@@ -364,9 +364,9 @@
         prompts: prompts.map(p => ({
           id: p.id || Utils.uid(),
           name: String(p.name || 'Untitled Prompt'),
-          includeX: Array.isArray(p.includeX) ? p.includeX.map(String) : [],
-          excludeY: Array.isArray(p.excludeY) ? p.excludeY.map(String) : [],
-          promptTemplate: String(p.promptTemplate || ''),
+          include: Array.isArray(p.include) ? p.include.map(String) : [],
+          exclude: Array.isArray(p.exclude) ? p.exclude.map(String) : [],
+          prompt: String(p.prompt || ''),
           placeholders: Array.isArray(p.placeholders)
             ? p.placeholders
                 .map(ph => ({ 
@@ -428,9 +428,9 @@
       const nextPrompt = {
         id,
         name: String(promptInput.name || 'Untitled Prompt').trim() || 'Untitled Prompt',
-        includeX: Utils.toArrayCSV(promptInput.includeX),
-        excludeY: Utils.toArrayCSV(promptInput.excludeY),
-        promptTemplate: String(promptInput.promptTemplate || ''),
+        include: Utils.toArrayCSV(promptInput.include),
+        exclude: Utils.toArrayCSV(promptInput.exclude),
+        prompt: String(promptInput.prompt || ''),
         placeholders: Utils.parsePlaceholderHints(promptInput.placeholderHints),
         createdAt: existing?.createdAt || now,
         updatedAt: now
@@ -1132,7 +1132,7 @@
       this._shadow.querySelector('#apt-prompt').addEventListener('input', () => {
         const active = this._getActivePrompt();
         if (!active) return;
-        if (this._shadow.querySelector('#apt-prompt').value !== active.promptTemplate) {
+        if (this._shadow.querySelector('#apt-prompt').value !== active.prompt) {
           this._activePromptId = '';
         }
       });
@@ -1153,7 +1153,7 @@
 
     _applyPromptToEditor(promptObj) {
       const input = this._shadow.querySelector('#apt-prompt');
-      input.value = promptObj.promptTemplate || '';
+      input.value = promptObj.prompt || '';
       this._activePromptId = promptObj.id;
     }
 
@@ -1213,7 +1213,7 @@
             Preview
           </div>
           ${promptMeta 
-            ? `<div class="apt-small" style="margin-bottom:8px">includeX: ${Utils.escapeHtml(promptMeta.includeX.join(', ') || '-')} · excludeY: ${Utils.escapeHtml(promptMeta.excludeY.join(', ') || '-')}</div>` 
+            ? `<div class="apt-small" style="margin-bottom:8px">include: ${Utils.escapeHtml(promptMeta.include.join(', ') || '-')} · exclude: ${Utils.escapeHtml(promptMeta.exclude.join(', ') || '-')}</div>`
             : ''}
           <div id="apt-preview-box">${Utils.buildPreviewHtml(template, {})}</div>
         </div>
@@ -1295,12 +1295,12 @@
               <button class="apt-dbtn apt-dbtn-cancel apt-flex-1" id="apt-lib-pull">Pull GitHub</button>
               <button class="apt-dbtn apt-dbtn-cancel apt-flex-1" id="apt-lib-push">Push GitHub</button>
             </div>
-            <div class="apt-small">Schema: each prompt includes <code>includeX</code>, <code>excludeY</code>, template, and placeholder hints.</div>
+            <div class="apt-small">Schema: each prompt includes <code>include</code>, <code>exclude</code>, prompt content, and placeholder hints.</div>
           </div>
 
           <div class="apt-section-box">
             <div class="apt-settings-section-title">Prompt List</div>
-            <input class="apt-field-input" id="apt-lib-search" placeholder="Search by name, includeX, excludeY...">
+            <input class="apt-field-input" id="apt-lib-search" placeholder="Search by name, include, exclude...">
             <div class="apt-list" id="apt-lib-list" style="margin-top:8px"></div>
           </div>
 
@@ -1311,11 +1311,11 @@
               <input class="apt-field-input" id="apt-lib-name" placeholder="Prompt name">
             </div>
             <div class="apt-row">
-              <input class="apt-field-input apt-flex-1" id="apt-lib-include" placeholder="includeX (comma-separated)">
-              <input class="apt-field-input apt-flex-1" id="apt-lib-exclude" placeholder="excludeY (comma-separated)">
+              <input class="apt-field-input apt-flex-1" id="apt-lib-include" placeholder="include (comma-separated URL patterns)">
+              <input class="apt-field-input apt-flex-1" id="apt-lib-exclude" placeholder="exclude (comma-separated URL patterns)">
             </div>
             <div class="apt-field">
-              <textarea class="apt-field-input" id="apt-lib-template" style="min-height:100px;resize:vertical" placeholder="Prompt template using {{placeholder}}"></textarea>
+              <textarea class="apt-field-input" id="apt-lib-template" style="min-height:100px;resize:vertical" placeholder="Prompt content using {{placeholder}}"></textarea>
             </div>
             <div class="apt-field">
               <textarea class="apt-field-input" id="apt-lib-hints" style="min-height:80px;resize:vertical" placeholder="placeholderName: user input hint"></textarea>
@@ -1364,18 +1364,18 @@
       const readForm = () => ({
         id: dlg.querySelector('#apt-lib-id').value,
         name: dlg.querySelector('#apt-lib-name').value,
-        includeX: dlg.querySelector('#apt-lib-include').value,
-        excludeY: dlg.querySelector('#apt-lib-exclude').value,
-        promptTemplate: dlg.querySelector('#apt-lib-template').value,
+        include: dlg.querySelector('#apt-lib-include').value,
+        exclude: dlg.querySelector('#apt-lib-exclude').value,
+        prompt: dlg.querySelector('#apt-lib-template').value,
         placeholderHints: dlg.querySelector('#apt-lib-hints').value
       });
 
       const writeForm = (promptObj) => {
         dlg.querySelector('#apt-lib-id').value = promptObj?.id || '';
         dlg.querySelector('#apt-lib-name').value = promptObj?.name || '';
-        dlg.querySelector('#apt-lib-include').value = (promptObj?.includeX || []).join(', ');
-        dlg.querySelector('#apt-lib-exclude').value = (promptObj?.excludeY || []).join(', ');
-        dlg.querySelector('#apt-lib-template').value = promptObj?.promptTemplate || '';
+        dlg.querySelector('#apt-lib-include').value = (promptObj?.include || []).join(', ');
+        dlg.querySelector('#apt-lib-exclude').value = (promptObj?.exclude || []).join(', ');
+        dlg.querySelector('#apt-lib-template').value = promptObj?.prompt || '';
         dlg.querySelector('#apt-lib-hints').value = Utils.hintsToText(promptObj?.placeholders || []);
       };
 
@@ -1396,9 +1396,9 @@
           if (!q) return true;
           const hay = [
             p.name,
-            p.includeX.join(' '),
-            p.excludeY.join(' '),
-            p.promptTemplate
+            p.include.join(' '),
+            p.exclude.join(' '),
+            p.prompt
           ].join(' ').toLowerCase();
           return hay.includes(q);
         });
@@ -1407,7 +1407,7 @@
           ? prompts.map(p => `
               <div class="apt-list-item ${p.id === this._activePromptId ? 'active' : ''}" data-id="${Utils.escapeHtml(p.id)}">
                 <div>${Utils.escapeHtml(p.name)}</div>
-                <div class="apt-list-meta">includeX: ${Utils.escapeHtml(p.includeX.join(', ') || '-')} · excludeY: ${Utils.escapeHtml(p.excludeY.join(', ') || '-')}</div>
+                <div class="apt-list-meta">include: ${Utils.escapeHtml(p.include.join(', ') || '-')} · exclude: ${Utils.escapeHtml(p.exclude.join(', ') || '-')}</div>
               </div>
             `).join('')
           : `<div class="apt-list-item">No prompts yet. Create one with "New Prompt".</div>`;
@@ -1448,8 +1448,8 @@
           setNote('Prompt name is required', true);
           return;
         }
-        if (!form.promptTemplate.trim()) {
-          setNote('Prompt template is required', true);
+        if (!form.prompt.trim()) {
+          setNote('Prompt content is required', true);
           return;
         }
         this._libraryState.doc = this._storage.upsertPrompt(this._libraryState.doc, form);
@@ -1460,7 +1460,7 @@
 
       dlg.querySelector('#apt-lib-load').addEventListener('click', () => {
         const form = readForm();
-        if (!form.promptTemplate.trim()) {
+        if (!form.prompt.trim()) {
           setNote('Nothing to load. Add or select a prompt first.', true);
           return;
         }
@@ -1468,7 +1468,7 @@
         if (current) {
           this._applyPromptToEditor(current);
         } else {
-          this._shadow.querySelector('#apt-prompt').value = form.promptTemplate;
+          this._shadow.querySelector('#apt-prompt').value = form.prompt;
           this._activePromptId = '';
         }
         this._showToast('Prompt loaded into tester');
