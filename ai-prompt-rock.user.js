@@ -1120,6 +1120,9 @@
 
       // Run button → execute prompt
       container.querySelectorAll('.apt-item-btn.run[data-id]').forEach(btn => {
+        btn.addEventListener('mousedown', () => {
+          this._pendingSelection = window.getSelection().toString().trim();
+        });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const p = this._storage.findPrompt(this._libraryState.doc, btn.dataset.id);
@@ -1149,7 +1152,8 @@
 
     _runPrompt(promptObj) {
       const template = promptObj.prompt || '';
-      const selection = window.getSelection().toString().trim();
+      const selection = this._pendingSelection ?? window.getSelection().toString().trim();
+      this._pendingSelection = null;
       const placeholders = Utils.parsePlaceholders(template);
       const hintMap = this._getPlaceholderHintMap(promptObj);
 
