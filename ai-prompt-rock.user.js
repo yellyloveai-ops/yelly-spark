@@ -39,6 +39,16 @@
 
   const PLACEHOLDER_RE = /\{\{([^{}]+?)\}\}/g;
 
+  // Trusted Types: Gmail and Google Docs enforce require-trusted-types-for 'script'.
+  // Create a passthrough policy so innerHTML assignments aren't blocked.
+  const _ttPolicy = (typeof trustedTypes !== 'undefined' && trustedTypes.createPolicy)
+    ? trustedTypes.createPolicy('apt-html', { createHTML: s => s })
+    : null;
+
+  function setHTML(el, html) {
+    el.innerHTML = _ttPolicy ? _ttPolicy.createHTML(html) : html;
+  }
+
   const API_MODES = Object.freeze({
     CLAUDE_API: 'claude-api',
     OPENAI_API: 'openai-api',
@@ -973,7 +983,7 @@
     _createMainPanel() {
       const panel = document.createElement('div');
       panel.id = 'apt-panel';
-      panel.innerHTML = `
+      setHTML(panel, `
         <div id="apt-header">
           <div id="apt-header-left">
             <span id="apt-logo">⚡</span>
@@ -991,7 +1001,7 @@
           <input id="apt-search" placeholder="Search prompts…">
           <div id="apt-list-container"></div>
         </div>
-      `;
+      `);
       return panel;
     }
 
@@ -1079,11 +1089,11 @@
       const others = prompts.filter(p => !Utils.matchesUrl(p, currentUrl));
 
       if (prompts.length === 0) {
-        container.innerHTML = `<div class="apt-empty">${
+        setHTML(container, `<div class="apt-empty">${
           q
             ? `No prompts match &ldquo;${Utils.escapeHtml(q)}&rdquo;.`
             : 'No prompts yet.<br>Click <strong>+</strong> to create your first prompt.'
-        }</div>`;
+        }</div>`);
         return;
       }
 
@@ -1097,7 +1107,7 @@
         html += others.map(p => this._promptItemHtml(p, false)).join('');
       }
 
-      container.innerHTML = html;
+      setHTML(container, html);
 
       // Row click → edit dialog
       container.querySelectorAll('.apt-item[data-id]').forEach(item => {
@@ -1159,7 +1169,7 @@
 
       const dlg = document.createElement('div');
       dlg.className = 'apt-dialog';
-      dlg.innerHTML = `
+      setHTML(dlg, `
         <div class="apt-dialog-header">
           <div>
             <div class="apt-dialog-title">${isEdit ? 'Edit Prompt' : 'New Prompt'}</div>
@@ -1190,7 +1200,7 @@
           <button class="apt-dbtn apt-dbtn-submit" id="apt-pd-test">▶ Test</button>
           <button class="apt-dbtn apt-dbtn-copy" id="apt-pd-save">💾 Save</button>
         </div>
-      `;
+      `);
 
       const ov = this._showOverlay(dlg);
 
@@ -1252,7 +1262,7 @@
     _openSyncDialog() {
       const dlg = document.createElement('div');
       dlg.className = 'apt-dialog';
-      dlg.innerHTML = `
+      setHTML(dlg, `
         <div class="apt-dialog-header">
           <div>
             <div class="apt-dialog-title">GitHub Sync</div>
@@ -1287,7 +1297,7 @@
           <button class="apt-dbtn" id="apt-sync-pull" style="background:#89dceb;color:#1e1e2e">⇓ Pull</button>
           <button class="apt-dbtn" id="apt-sync-push" style="background:#cba6f7;color:#1e1e2e">⇑ Push</button>
         </div>
-      `;
+      `);
 
       const ov = this._showOverlay(dlg);
       const statusEl = dlg.querySelector('#apt-sync-status');
@@ -1361,7 +1371,7 @@
              No placeholders found. The prompt will be sent as-is.
            </div>`;
 
-      dlg.innerHTML = `
+      setHTML(dlg, `
         <div class="apt-dialog-header">
           <div>
             <div class="apt-dialog-title">Fill Placeholder Values</div>
@@ -1394,7 +1404,7 @@
                   : '⚡ Run Agent'}
           </button>
         </div>
-      `;
+      `);
 
       const ov = this._showOverlay(dlg);
 
@@ -1417,7 +1427,7 @@
       // Live preview update
       dlg.querySelectorAll('.apt-field-input[data-ph]').forEach(inp => {
         inp.addEventListener('input', () => {
-          dlg.querySelector('#apt-preview-box').innerHTML = Utils.buildPreviewHtml(template, getValues());
+          setHTML(dlg.querySelector('#apt-preview-box'), Utils.buildPreviewHtml(template, getValues()));
         });
       });
 
@@ -1444,7 +1454,7 @@
     _openSettingsDialog() {
       const dlg = document.createElement('div');
       dlg.className = 'apt-dialog';
-      dlg.innerHTML = `
+      setHTML(dlg, `
         <div class="apt-dialog-header">
           <div>
             <div class="apt-dialog-title">Settings</div>
@@ -1523,7 +1533,7 @@
           <button class="apt-dbtn apt-dbtn-cancel" id="apt-settings-cancel">Cancel</button>
           <button class="apt-dbtn apt-dbtn-submit" id="apt-settings-save">Save</button>
         </div>
-      `;
+      `);
 
       const ov = this._showOverlay(dlg);
 
@@ -1570,7 +1580,7 @@
 
       const dlg = document.createElement('div');
       dlg.className = 'apt-dialog';
-      dlg.innerHTML = `
+      setHTML(dlg, `
         <div class="apt-dialog-header">
           <div>
             <div class="apt-dialog-title">Agent Response</div>
@@ -1589,7 +1599,7 @@
           <button class="apt-dbtn apt-dbtn-cancel" id="apt-resp-close">Close</button>
           <button class="apt-dbtn apt-dbtn-copy" id="apt-resp-copy" disabled>📋 Copy</button>
         </div>
-      `;
+      `);
 
       const ov = this._showOverlay(dlg);
       dlg.querySelector('#apt-resp-close').addEventListener('click', () => ov.remove());
@@ -1618,7 +1628,7 @@
 
       const errorCallback = (msg) => {
         box.classList.remove('streaming');
-        box.innerHTML = `<span style="color:#f38ba8">${Utils.escapeHtml(msg)}</span>`;
+        setHTML(box, `<span style="color:#f38ba8">${Utils.escapeHtml(msg)}</span>`);
         setStatus('error', msg);
       };
 
