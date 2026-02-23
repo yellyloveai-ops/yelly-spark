@@ -1063,7 +1063,7 @@
         </div>
         <div id="apt-header">
           <div id="apt-header-left">
-            <span id="apt-title">🚀 Prompt</span>
+            <span id="apt-title">🚀</span>
             <button class="apt-icon-btn" id="apt-btn-update" title="Check for update">↻</button>
           </div>
           <div id="apt-header-btns">
