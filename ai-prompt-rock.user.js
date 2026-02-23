@@ -1063,7 +1063,7 @@
         </div>
         <div id="apt-header">
           <div id="apt-header-left">
-            <span id="apt-title">prompt 🚀</span>
+            <span id="apt-title">🚀 Prompt</span>
           </div>
           <div id="apt-header-btns">
             <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
