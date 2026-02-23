@@ -531,9 +531,8 @@
           padding: 10px 12px; cursor: move; user-select: none;
           border-top: 1px solid #313244; flex-shrink: 0;
         }
-        #apt-header-left { display: flex; align-items: center; gap: 8px; }
-        #apt-logo { font-size: 18px; }
-        #apt-title { color: #cdd6f4; font-weight: 600; font-size: 14px; }
+        #apt-header-left { display: flex; align-items: center; }
+        #apt-title { color: #cdd6f4; font-weight: 600; font-size: 13px; }
         #apt-header-btns { display: flex; gap: 3px; align-items: center; }
         .apt-header-sep { width: 1px; height: 14px; background: #313244; margin: 0 3px; flex-shrink: 0; }
         .apt-icon-btn {
@@ -1064,13 +1063,13 @@
         </div>
         <div id="apt-header">
           <div id="apt-header-left">
-            <span id="apt-logo">🚀</span>
-            <span id="apt-title">Prompt Rock</span>
+            <span id="apt-title">prompt 🚀</span>
           </div>
           <div id="apt-header-btns">
             <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
             <button class="apt-icon-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
             <button class="apt-icon-btn" id="apt-btn-settings" title="Settings">⚙</button>
+            <button class="apt-icon-btn" id="apt-btn-update" title="Check for update">↑</button>
             <span class="apt-header-sep"></span>
             <button class="apt-icon-btn" id="apt-btn-close" title="Minimize">−</button>
           </div>
@@ -1120,6 +1119,14 @@
       // Settings button
       this._shadow.querySelector('#apt-btn-settings').addEventListener('click', () => {
         this._openSettingsDialog();
+      });
+
+      // Update button — open the @downloadURL so Tampermonkey can offer an update
+      this._shadow.querySelector('#apt-btn-update').addEventListener('click', () => {
+        const downloadURL = (typeof GM_info !== 'undefined' && GM_info.script?.downloadURL)
+          || 'https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js';
+        window.open(downloadURL, '_blank');
+        this._showToast('Opening update page…');
       });
 
       // Minimize button — hide panel, show restore pill
