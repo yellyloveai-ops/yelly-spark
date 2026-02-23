@@ -532,7 +532,8 @@
           border-top: 1px solid #313244; flex-shrink: 0;
         }
         #apt-header-left { display: flex; align-items: center; }
-        #apt-title { color: #cdd6f4; font-weight: 600; font-size: 13px; }
+        #apt-title { color: #cdd6f4; font-weight: 600; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .15s; }
+        #apt-panel:hover #apt-title { opacity: 1; pointer-events: auto; }
         #apt-header-btns { display: flex; gap: 3px; align-items: center; opacity: 0; pointer-events: none; transition: opacity .15s; }
         #apt-panel:hover #apt-header-btns { opacity: 1; pointer-events: auto; }
         .apt-header-sep { width: 1px; height: 14px; background: #313244; margin: 0 3px; flex-shrink: 0; }
@@ -1066,8 +1067,7 @@
         </div>
         <div id="apt-header">
           <div id="apt-header-left">
-            <span id="apt-title">🚀</span>
-            <button class="apt-icon-btn" id="apt-btn-update" title="Check for update">↻</button>
+            <button class="apt-icon-btn" id="apt-title" title="Check for update">🚀</button>
           </div>
           <div id="apt-header-btns">
             <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
@@ -1124,8 +1124,8 @@
         this._openSettingsDialog();
       });
 
-      // Update button — open the @downloadURL so Tampermonkey can offer an update
-      this._shadow.querySelector('#apt-btn-update').addEventListener('click', () => {
+      // Rocket icon — open the @downloadURL so Tampermonkey can offer an update
+      this._shadow.querySelector('#apt-title').addEventListener('click', () => {
         const downloadURL = (typeof GM_info !== 'undefined' && GM_info.script?.downloadURL)
           || 'https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js';
         window.open(downloadURL, '_blank');
