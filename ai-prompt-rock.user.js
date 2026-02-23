@@ -564,9 +564,10 @@
         #apt-panel.view-page #apt-header { border-top-color: rgba(137,180,250,.12); }
         #apt-panel.view-page #apt-list-container { opacity: 0.9; transition: opacity .2s; }
         #apt-panel.view-page:hover #apt-list-container, #apt-panel.view-page:focus-within #apt-list-container { opacity: 1; }
-        #apt-panel.view-page .apt-item { transition: background .15s, border-color .15s; }
-        #apt-panel.view-page .apt-item.url-match { background: rgba(137,180,250,.02); border-color: rgba(137,180,250,.1); }
-        #apt-panel.view-page:hover .apt-item.url-match, #apt-panel.view-page:focus-within .apt-item.url-match { background: rgba(137,180,250,.04); border-color: rgba(137,180,250,.25); }
+        #apt-panel.view-page .apt-item { border-color: rgba(49,50,68,.6); transition: background .15s, border-color .15s; }
+        #apt-panel.view-page:hover .apt-item, #apt-panel.view-page:focus-within .apt-item { border-color: #313244; }
+        #apt-panel.view-page .apt-item.url-match { background: rgba(137,180,250,.02); border-color: rgba(137,180,250,.2); }
+        #apt-panel.view-page:hover .apt-item.url-match, #apt-panel.view-page:focus-within .apt-item.url-match { background: rgba(137,180,250,.04); border-color: rgba(137,180,250,.5); }
         #apt-panel.view-page .apt-item-name { color: #cdd6f4; transition: color .15s; }
         #apt-panel.view-page .apt-item-meta { color: rgba(108,112,134,.25); transition: color .15s; }
         #apt-panel.view-page:hover .apt-item-meta, #apt-panel.view-page:focus-within .apt-item-meta { color: #6c7086; }
@@ -625,12 +626,12 @@
         }
         .apt-item {
           display: flex; align-items: center; gap: 8px; padding: 8px 14px;
-          border-radius: 999px; cursor: pointer; transition: background .12s;
-          border: 1px solid transparent;
+          border-radius: 999px; cursor: pointer; transition: background .12s, border-color .12s;
+          border: 1px solid #313244;
         }
-        .apt-item:hover { background: #232438; }
-        .apt-item.url-match { border-color: rgba(137,180,250,.25); background: rgba(137,180,250,.04); }
-        .apt-item.url-match:hover { background: rgba(137,180,250,.1); }
+        .apt-item:hover { background: #232438; border-color: #585b70; }
+        .apt-item.url-match { border-color: rgba(137,180,250,.5); background: rgba(137,180,250,.04); }
+        .apt-item.url-match:hover { background: rgba(137,180,250,.1); border-color: #89b4fa; }
         .apt-item-info { flex: 1; min-width: 0; }
         .apt-item-name {
           font-size: 13px; font-weight: 500; color: #cdd6f4;
