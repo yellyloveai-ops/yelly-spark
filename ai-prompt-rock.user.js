@@ -547,8 +547,10 @@
         #apt-body {
           overflow: hidden; display: flex; flex-direction: column;
           padding: 10px 12px 8px; max-height: 450px;
+          opacity: 0; pointer-events: none;
           transition: max-height .25s ease, padding .2s ease, opacity .2s;
         }
+        #apt-panel:hover #apt-body { opacity: 1; pointer-events: auto; }
         #apt-search {
           width: 100%; background: #181825; border: 1px solid #313244;
           border-radius: 8px; color: #cdd6f4; font-size: 12px; padding: 7px 10px;
