@@ -1408,7 +1408,7 @@
           </div>
           <div id="apt-sync-status" style="color:#6c7086;font-size:12px;margin-top:4px;min-height:18px"></div>
           <div class="apt-field" style="margin-top:12px">
-            <div class="apt-field-label">Share config <span style="font-weight:400;font-size:11px;color:#6c7086;text-transform:none;letter-spacing:0">(owner/repo/branch/path — no token)</span></div>
+            <div class="apt-field-label">Share config <span style="font-weight:400;font-size:11px;color:#6c7086;text-transform:none;letter-spacing:0">(owner/repo/branch/path/token)</span></div>
             <div style="display:flex;gap:6px;align-items:center">
               <input class="apt-field-input" id="apt-sync-sharelink" readonly style="flex:1;font-size:11px;color:#6c7086;cursor:text" placeholder="Enter owner & repo above to generate link">
               <button class="apt-dbtn" id="apt-sync-copylink" style="background:#f9e2af;color:#1e1e2e;flex-shrink:0;padding:9px 12px;font-size:15px" title="Copy shareable link">🔗</button>
@@ -1483,15 +1483,18 @@
         const repo = dlg.querySelector('#apt-sync-repo').value.trim();
         const branch = dlg.querySelector('#apt-sync-branch').value.trim() || 'main';
         const path = dlg.querySelector('#apt-sync-path').value.trim() || 'prompts/library.json';
+        const token = dlg.querySelector('#apt-sync-token').value.trim();
         if (owner && repo) {
-          const encoded = Utils.b64EncodeUnicode(JSON.stringify({ owner, repo, branch, path }));
+          const cfg = { owner, repo, branch, path };
+          if (token) cfg.token = token;
+          const encoded = Utils.b64EncodeUnicode(JSON.stringify(cfg));
           shareLinkInput.value = `${location.href.split('#')[0]}#apt-cfg=${encoded}`;
         } else {
           shareLinkInput.value = '';
         }
       };
       updateShareLink();
-      ['#apt-sync-owner', '#apt-sync-repo', '#apt-sync-branch', '#apt-sync-path'].forEach(id => {
+      ['#apt-sync-owner', '#apt-sync-repo', '#apt-sync-branch', '#apt-sync-path', '#apt-sync-token'].forEach(id => {
         dlg.querySelector(id).addEventListener('input', updateShareLink);
       });
       dlg.querySelector('#apt-sync-copylink').addEventListener('click', () => {
@@ -1933,6 +1936,7 @@
         if (cfg.repo) this._config.githubRepo = cfg.repo;
         if (cfg.branch) this._config.githubBranch = cfg.branch;
         if (cfg.path) this._config.githubPath = cfg.path;
+        if (cfg.token) this._config.githubToken = cfg.token;
         banner.style.background = '#a6e3a1';
         banner.textContent = 'GitHub config imported! ✓';
         setTimeout(() => banner.remove(), 2000);
