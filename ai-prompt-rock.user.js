@@ -572,6 +572,8 @@
         #apt-panel.view-page:hover .apt-item-meta, #apt-panel.view-page:focus-within .apt-item-meta { color: #6c7086; }
         #apt-panel.view-page .apt-item-btn.run { color: rgba(137,180,250,.3); border-color: rgba(137,180,250,.15); transition: color .15s, border-color .15s; }
         #apt-panel.view-page:hover .apt-item-btn.run, #apt-panel.view-page:focus-within .apt-item-btn.run { color: #89b4fa; border-color: rgba(137,180,250,.4); }
+        #apt-panel.view-page .apt-item-sep { background: rgba(49,50,68,.25); transition: background .15s; }
+        #apt-panel.view-page:hover .apt-item-sep, #apt-panel.view-page:focus-within .apt-item-sep { background: rgba(49,50,68,.55); }
         /* Full view — solid background; 80% transparent on unhover */
         #apt-panel.view-full {
           background: #1e1e2e; border-color: rgba(49,50,68,0.6); opacity: 0.2;
@@ -616,10 +618,15 @@
           color: #6c7086; font-size: 10px; font-weight: 600; text-transform: uppercase;
           letter-spacing: .5px; padding: 6px 4px 4px;
         }
+        .apt-item-sep {
+          height: 1px; border-radius: 999px;
+          background: rgba(49,50,68,.55);
+          margin: 1px 10px; flex-shrink: 0;
+        }
         .apt-item {
           display: flex; align-items: center; gap: 8px; padding: 8px 10px;
           border-radius: 8px; cursor: pointer; transition: background .12s;
-          border: 1px solid transparent; margin-bottom: 2px;
+          border: 1px solid transparent;
         }
         .apt-item:hover { background: #232438; }
         .apt-item.url-match { border-color: rgba(137,180,250,.25); background: rgba(137,180,250,.04); }
@@ -1278,13 +1285,14 @@
         return;
       }
 
+      const SEP = '<div class="apt-item-sep"></div>';
       let html = '';
       if (this._viewMode === 'page') {
-        html += matched.map(p => this._promptItemHtml(p, true)).join('');
+        html += matched.map(p => this._promptItemHtml(p, true)).join(SEP);
       } else {
         if (matched.length > 0) {
           html += '<div class="apt-section-label">This page</div>';
-          html += matched.map(p => this._promptItemHtml(p, true)).join('');
+          html += matched.map(p => this._promptItemHtml(p, true)).join(SEP);
         }
         if (others.length > 0) {
           if (matched.length > 0) {
@@ -1293,9 +1301,9 @@
               <span>All prompts (${others.length})</span>
               <span class="apt-toggle-icon">${collapsed ? '▶' : '▼'}</span>
             </div>`;
-            html += `<div id="apt-others-list"${collapsed ? ' style="display:none"' : ''}>${others.map(p => this._promptItemHtml(p, false)).join('')}</div>`;
+            html += `<div id="apt-others-list"${collapsed ? ' style="display:none"' : ''}>${others.map(p => this._promptItemHtml(p, false)).join(SEP)}</div>`;
           } else {
-            html += others.map(p => this._promptItemHtml(p, false)).join('');
+            html += others.map(p => this._promptItemHtml(p, false)).join(SEP);
           }
         }
       }
