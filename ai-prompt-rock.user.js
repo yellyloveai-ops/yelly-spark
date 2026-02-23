@@ -667,7 +667,7 @@
         }
         .apt-field-label span { color: #89b4fa; font-family: monospace; text-transform: none; letter-spacing: 0; font-size: 13px; }
         .apt-field-input {
-          width: 100%; background: #181825; border: 1px solid #313244;
+          width: 100%; box-sizing: border-box; background: #181825; border: 1px solid #313244;
           border-radius: 8px; color: #cdd6f4; font-size: 13px; padding: 9px 12px;
           outline: none; transition: border-color .15s;
         }
@@ -1064,12 +1064,12 @@
         <div id="apt-header">
           <div id="apt-header-left">
             <span id="apt-title">🚀 Prompt</span>
+            <button class="apt-icon-btn" id="apt-btn-update" title="Check for update">↻</button>
           </div>
           <div id="apt-header-btns">
             <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
             <button class="apt-icon-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
             <button class="apt-icon-btn" id="apt-btn-settings" title="Settings">⚙</button>
-            <button class="apt-icon-btn" id="apt-btn-update" title="Check for update">↑</button>
             <span class="apt-header-sep"></span>
             <button class="apt-icon-btn" id="apt-btn-close" title="Minimize">−</button>
           </div>
