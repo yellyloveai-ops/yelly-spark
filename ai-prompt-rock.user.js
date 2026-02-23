@@ -41,12 +41,32 @@
 
   // Trusted Types: Gmail and Google Docs enforce require-trusted-types-for 'script'.
   // Create a passthrough policy so innerHTML assignments aren't blocked.
-  const _ttPolicy = (typeof trustedTypes !== 'undefined' && trustedTypes.createPolicy)
-    ? trustedTypes.createPolicy('apt-html', { createHTML: s => s })
-    : null;
+  console.log('[APR] env:', {
+    browser: navigator.userAgent,
+    trustedTypes: typeof trustedTypes !== 'undefined' ? 'available' : 'unavailable',
+    GM_xmlhttpRequest: typeof GM_xmlhttpRequest !== 'undefined' ? 'available' : 'MISSING',
+    GM_setValue: typeof GM_setValue !== 'undefined' ? 'available' : 'MISSING',
+    GM_getValue: typeof GM_getValue !== 'undefined' ? 'available' : 'MISSING',
+    shadowDOMSupport: !!document.createElement('div').attachShadow,
+    url: location.href
+  });
+
+  let _ttPolicy = null;
+  try {
+    if (typeof trustedTypes !== 'undefined' && trustedTypes.createPolicy) {
+      _ttPolicy = trustedTypes.createPolicy('apt-html', { createHTML: s => s });
+      console.log('[APR] TrustedTypes policy created');
+    }
+  } catch (e) {
+    console.warn('[APR] TrustedTypes policy creation failed:', e);
+  }
 
   function setHTML(el, html) {
-    el.innerHTML = _ttPolicy ? _ttPolicy.createHTML(html) : html;
+    try {
+      el.innerHTML = _ttPolicy ? _ttPolicy.createHTML(html) : html;
+    } catch (e) {
+      console.error('[APR] setHTML failed:', e, { el, htmlLen: html?.length });
+    }
   }
 
   const API_MODES = Object.freeze({
@@ -547,7 +567,7 @@
         #apt-restore-pill:hover { background: rgba(137,180,250,.12); border-color: #89b4fa; }
         #apt-restore-pill::after {
           content: 'Prompt Rock (by Yelly.ink)';
-          position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+          position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
           background: #1e1e2e; border: 1px solid #313244; border-radius: 8px;
           color: #cdd6f4; font-size: 12px; font-weight: 500; white-space: nowrap;
           padding: 5px 10px; pointer-events: none;
@@ -826,7 +846,13 @@
             }
           };
 
-      console.log('[APR] ▶ request', { provider, model, promptLen: prompt.length, payload });
+      console.log('[APR] ▶ request', {
+        provider, model, promptLen: prompt.length,
+        url: request.url,
+        hasApiKey: isClaude ? !!this._config.claudeApiKey : !!this._config.openaiApiKey,
+        responseType: 'stream',
+        GM_xmlhttpRequest: typeof GM_xmlhttpRequest
+      });
 
       let fullText = '';
       let inputTokens = 0;
@@ -841,7 +867,7 @@
         responseType: 'stream',
         onreadystatechange: (res) => {
           if (res.readyState < 3) return;
-          console.log(`[APR] readyState=${res.readyState} status=${res.status}`);
+          console.log(`[APR] readyState=${res.readyState} status=${res.status} responseTextLen=${res.responseText?.length ?? 0}`);
 
           if (res.status && res.status !== 200) {
             if (res.readyState < 4) return;
@@ -933,7 +959,12 @@
           }
         },
         onerror: (err) => {
-          console.error('[APR] network error', err);
+          console.error('[APR] network error', {
+            err,
+            provider,
+            url: request.url,
+            userAgent: navigator.userAgent
+          });
           onError('Network error — check your connection.');
         }
       });
@@ -958,26 +989,36 @@
     }
 
     _init() {
+      console.log('[APR] UIManager._init() start');
       // Create Shadow DOM
       this._host = document.createElement('div');
       this._host.style.cssText = 'all:initial;position:static';
       this._attachHost();
-      this._shadow = this._host.attachShadow({ mode: 'open' });
+      try {
+        this._shadow = this._host.attachShadow({ mode: 'open' });
+        console.log('[APR] Shadow DOM attached:', !!this._shadow);
+      } catch (e) {
+        console.error('[APR] attachShadow failed:', e);
+        return;
+      }
 
       // Add styles
       const styleEl = document.createElement('style');
       styleEl.textContent = Styles.getAllStyles();
       this._shadow.appendChild(styleEl);
+      console.log('[APR] styles injected, length:', styleEl.textContent.length);
 
       // Build panel
       this._panel = this._createMainPanel();
       this._shadow.appendChild(this._panel);
+      console.log('[APR] main panel created and appended');
 
       // Setup interactions
       this._setupDraggable();
       this._setupPanelEvents();
       this._renderPromptList();
       this._checkUrlForConfig();
+      console.log('[APR] panel setup complete');
 
       // Auto-pull from GitHub if cache is stale and credentials are set
       if (!this._storage.hasFreshCache() && this._config.githubOwner && this._config.githubRepo) {
@@ -1897,8 +1938,13 @@
     }
 
     init() {
-      this._ui = new UIManager(this._config, this._storage, this._apiClient);
-      console.log('[APR] AI Prompt Rock initialized');
+      console.log('[APR] App.init() — constructing UIManager');
+      try {
+        this._ui = new UIManager(this._config, this._storage, this._apiClient);
+        console.log('[APR] AI Prompt Rock initialized ✓');
+      } catch (e) {
+        console.error('[APR] UIManager construction failed:', e);
+      }
     }
   }
 
