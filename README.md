@@ -24,7 +24,7 @@ Tampermonkey / Greasemonkey user scripts.
 - **Placeholder substitution** — write `{{variable}}` in your prompt and fill values at test time
 - **Live preview** — see the filled prompt update in real time as you type
 - **Three panel view modes**:
-  - **Minimized** — collapses to a small restore button; click ⚡ to expand
+  - **Minimized** — collapses to a small restore button; click 🚀 to expand
   - **Page view** — shows only prompts whose URL patterns match the current page; activates automatically when matches are found
   - **Full view** — shows all prompts with a search bar (visible when library has > 5 prompts)
 - **Prompt Library** — create / search / edit / delete prompts with full metadata
@@ -40,8 +40,8 @@ Tampermonkey / Greasemonkey user scripts.
 
 ### Usage
 
-1. A floating ⚡ panel appears on every page (bottom-right corner)
-2. Click ⚡ to expand — it opens in **Page view** if any prompts match the current URL, otherwise **Full view**
+1. A floating 🚀 panel appears on every page (bottom-right corner)
+2. Click 🚀 to expand — it opens in **Page view** if any prompts match the current URL, otherwise **Full view**
 3. Click a prompt to open the **Run dialog**:
    - Fill placeholder values (hints guide you)
    - Live preview shows substituted text
