@@ -989,6 +989,7 @@
       this._host = null;
       this._shadow = null;
       this._panel = null;
+      this._viewMode = 'minimized'; // 'minimized' | 'page' | 'full'
 
       this._init();
     }
@@ -1018,6 +1019,12 @@
       this._shadow.appendChild(this._panel);
       console.log('[APR] main panel created and appended');
 
+      // Determine initial view mode before first render
+      const isMinimized = Utils.safeLocalGet('apt_panel_minimized', true);
+      if (!isMinimized) {
+        this._viewMode = this._getPageMatchedPrompts().length > 0 ? 'page' : 'full';
+      }
+
       // Setup interactions
       this._setupDraggable();
       this._setupPanelEvents();
@@ -1025,11 +1032,13 @@
       this._checkUrlForConfig();
       console.log('[APR] panel setup complete');
 
-      // Apply persisted minimized state — minimized by default
-      const isMinimized = Utils.safeLocalGet('apt_panel_minimized', true);
-      if (isMinimized) {
+      // Apply initial view state
+      if (this._viewMode === 'minimized') {
         this._panel.style.display = 'none';
         this._showRestoreButton();
+      } else {
+        const expandBtn = this._shadow.querySelector('#apt-btn-expand');
+        if (expandBtn) expandBtn.style.display = this._viewMode === 'page' ? '' : 'none';
       }
 
       // Auto-pull from GitHub if cache is stale and credentials are set
@@ -1075,6 +1084,7 @@
             <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
             <button class="apt-icon-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
             <button class="apt-icon-btn" id="apt-btn-settings" title="Settings">⚙</button>
+            <button class="apt-icon-btn" id="apt-btn-expand" title="Full view" style="display:none">⤢</button>
             <span class="apt-header-sep"></span>
             <button class="apt-icon-btn" id="apt-btn-close" title="Minimize">−</button>
           </div>
@@ -1134,17 +1144,43 @@
         this._showToast('Opening update page…');
       });
 
+      // Expand button — switch to full view
+      this._shadow.querySelector('#apt-btn-expand').addEventListener('click', () => {
+        this._setView('full');
+      });
+
       // Minimize button — hide panel, show restore pill
       this._shadow.querySelector('#apt-btn-close').addEventListener('click', () => {
-        this._panel.style.display = 'none';
-        Utils.safeLocalSet('apt_panel_minimized', true);
-        this._showRestoreButton();
+        this._setView('minimized');
       });
 
       // Search input
       this._shadow.querySelector('#apt-search').addEventListener('input', () => {
         this._renderPromptList();
       });
+    }
+
+    _getPageMatchedPrompts() {
+      const currentUrl = location.href;
+      const hasInclude = (p) => Array.isArray(p.include) && p.include.filter(Boolean).length > 0;
+      return this._libraryState.doc.prompts.filter(
+        p => hasInclude(p) && Utils.matchesUrl(p, currentUrl)
+      );
+    }
+
+    _setView(mode) {
+      this._viewMode = mode;
+      const expandBtn = this._shadow.querySelector('#apt-btn-expand');
+      if (mode === 'minimized') {
+        this._panel.style.display = 'none';
+        Utils.safeLocalSet('apt_panel_minimized', true);
+        this._showRestoreButton();
+      } else {
+        this._panel.style.display = '';
+        Utils.safeLocalSet('apt_panel_minimized', false);
+        if (expandBtn) expandBtn.style.display = mode === 'page' ? '' : 'none';
+        this._renderPromptList();
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1160,7 +1196,7 @@
       const currentUrl = location.href;
 
       const totalPrompts = this._libraryState.doc.prompts.length;
-      if (searchEl) searchEl.style.display = totalPrompts > 5 ? '' : 'none';
+      if (searchEl) searchEl.style.display = (this._viewMode !== 'page' && totalPrompts > 5) ? '' : 'none';
 
       let prompts = this._libraryState.doc.prompts;
       if (q) {
@@ -1174,6 +1210,13 @@
       const matched = prompts.filter(p => hasInclude(p) && Utils.matchesUrl(p, currentUrl));
       const others = prompts.filter(p => !hasInclude(p) || !Utils.matchesUrl(p, currentUrl));
 
+      // Fall back to full view if page mode has no matched prompts (e.g. after sync)
+      if (this._viewMode === 'page' && matched.length === 0) {
+        this._viewMode = 'full';
+        const expandBtn = this._shadow.querySelector('#apt-btn-expand');
+        if (expandBtn) expandBtn.style.display = 'none';
+      }
+
       if (prompts.length === 0) {
         setHTML(container, `<div class="apt-empty">${
           q
@@ -1184,20 +1227,24 @@
       }
 
       let html = '';
-      if (matched.length > 0) {
-        html += '<div class="apt-section-label">This page</div>';
+      if (this._viewMode === 'page') {
         html += matched.map(p => this._promptItemHtml(p, true)).join('');
-      }
-      if (others.length > 0) {
+      } else {
         if (matched.length > 0) {
-          const collapsed = !q; // hide by default only when not searching
-          html += `<div class="apt-section-label apt-section-toggle" id="apt-others-toggle">
-            <span>All prompts (${others.length})</span>
-            <span class="apt-toggle-icon">${collapsed ? '▶' : '▼'}</span>
-          </div>`;
-          html += `<div id="apt-others-list"${collapsed ? ' style="display:none"' : ''}>${others.map(p => this._promptItemHtml(p, false)).join('')}</div>`;
-        } else {
-          html += others.map(p => this._promptItemHtml(p, false)).join('');
+          html += '<div class="apt-section-label">This page</div>';
+          html += matched.map(p => this._promptItemHtml(p, true)).join('');
+        }
+        if (others.length > 0) {
+          if (matched.length > 0) {
+            const collapsed = !q; // hide by default only when not searching
+            html += `<div class="apt-section-label apt-section-toggle" id="apt-others-toggle">
+              <span>All prompts (${others.length})</span>
+              <span class="apt-toggle-icon">${collapsed ? '▶' : '▼'}</span>
+            </div>`;
+            html += `<div id="apt-others-list"${collapsed ? ' style="display:none"' : ''}>${others.map(p => this._promptItemHtml(p, false)).join('')}</div>`;
+          } else {
+            html += others.map(p => this._promptItemHtml(p, false)).join('');
+          }
         }
       }
 
@@ -1910,9 +1957,9 @@
       setHTML(pill, '<span>🚀</span>');
       this._shadow.appendChild(pill);
       pill.addEventListener('click', () => {
-        this._panel.style.display = '';
-        Utils.safeLocalSet('apt_panel_minimized', false);
         pill.remove();
+        const hasPagePrompts = this._getPageMatchedPrompts().length > 0;
+        this._setView(hasPagePrompts ? 'page' : 'full');
       });
     }
 
