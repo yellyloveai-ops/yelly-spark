@@ -1037,8 +1037,7 @@
         this._panel.style.display = 'none';
         this._showRestoreButton();
       } else {
-        const expandBtn = this._shadow.querySelector('#apt-btn-expand');
-        if (expandBtn) expandBtn.style.display = this._viewMode === 'page' ? '' : 'none';
+        this._applyViewButtons();
       }
 
       // Auto-pull from GitHub if cache is stale and credentials are set
@@ -1168,9 +1167,20 @@
       );
     }
 
+    _applyViewButtons() {
+      const isPage = this._viewMode === 'page';
+      const newBtn = this._shadow.querySelector('#apt-btn-new');
+      const syncBtn = this._shadow.querySelector('#apt-btn-sync');
+      const settingsBtn = this._shadow.querySelector('#apt-btn-settings');
+      const expandBtn = this._shadow.querySelector('#apt-btn-expand');
+      if (newBtn) newBtn.style.display = isPage ? 'none' : '';
+      if (syncBtn) syncBtn.style.display = isPage ? 'none' : '';
+      if (settingsBtn) settingsBtn.style.display = isPage ? 'none' : '';
+      if (expandBtn) expandBtn.style.display = 'none';
+    }
+
     _setView(mode) {
       this._viewMode = mode;
-      const expandBtn = this._shadow.querySelector('#apt-btn-expand');
       if (mode === 'minimized') {
         this._panel.style.display = 'none';
         Utils.safeLocalSet('apt_panel_minimized', true);
@@ -1178,7 +1188,7 @@
       } else {
         this._panel.style.display = '';
         Utils.safeLocalSet('apt_panel_minimized', false);
-        if (expandBtn) expandBtn.style.display = mode === 'page' ? '' : 'none';
+        this._applyViewButtons();
         this._renderPromptList();
       }
     }
@@ -1213,8 +1223,7 @@
       // Fall back to full view if page mode has no matched prompts (e.g. after sync)
       if (this._viewMode === 'page' && matched.length === 0) {
         this._viewMode = 'full';
-        const expandBtn = this._shadow.querySelector('#apt-btn-expand');
-        if (expandBtn) expandBtn.style.display = 'none';
+        this._applyViewButtons();
       }
 
       if (prompts.length === 0) {
