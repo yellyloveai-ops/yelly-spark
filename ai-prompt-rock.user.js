@@ -526,7 +526,7 @@
           box-shadow: none; border: 1px solid transparent;
           display: flex; flex-direction: column; transition: border-color .15s, background .15s, box-shadow .15s;
         }
-        #apt-panel:hover { border-color: #313244; background: #1e1e2e; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+        #apt-panel:hover, #apt-panel:focus-within { border-color: #313244; background: #1e1e2e; box-shadow: 0 8px 40px rgba(0,0,0,.5); }
         #apt-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 10px 12px; cursor: move; user-select: none;
@@ -534,9 +534,9 @@
         }
         #apt-header-left { display: flex; align-items: center; }
         #apt-title { color: #cdd6f4; font-weight: 600; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .15s; }
-        #apt-panel:hover #apt-title { opacity: 1; pointer-events: auto; }
+        #apt-panel:hover #apt-title, #apt-panel:focus-within #apt-title { opacity: 1; pointer-events: auto; }
         #apt-header-btns { display: flex; gap: 3px; align-items: center; opacity: 0; pointer-events: none; transition: opacity .15s; }
-        #apt-panel:hover #apt-header-btns { opacity: 1; pointer-events: auto; }
+        #apt-panel:hover #apt-header-btns, #apt-panel:focus-within #apt-header-btns { opacity: 1; pointer-events: auto; }
         .apt-header-sep { width: 1px; height: 14px; background: #313244; margin: 0 3px; flex-shrink: 0; }
         .apt-icon-btn {
           background: none; border: none; cursor: pointer; color: #6c7086;
@@ -546,19 +546,18 @@
         .apt-icon-btn:hover { color: #cdd6f4; background: #313244; }
         #apt-body {
           overflow: hidden; display: flex; flex-direction: column;
-          padding: 10px 12px 8px; max-height: 450px;
+          padding: 10px 12px 0; max-height: 450px;
           opacity: 0; pointer-events: none;
           transition: max-height .25s ease, padding .2s ease, opacity .2s;
         }
-        #apt-panel:hover #apt-body { opacity: 1; pointer-events: auto; }
+        #apt-panel:hover #apt-body, #apt-panel:focus-within #apt-body { opacity: 1; pointer-events: auto; }
         #apt-search {
-          width: 100%; background: #181825; border: 1px solid #313244;
+          background: #181825; border: 1px solid #313244;
           border-radius: 8px; color: #cdd6f4; font-size: 12px; padding: 7px 10px;
-          outline: none; transition: border-color .15s, opacity .15s, max-height .15s, margin .15s; font-family: monospace;
-          margin-bottom: 8px; flex-shrink: 0;
-          opacity: 0; pointer-events: none; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0;
+          outline: none; font-family: monospace; margin: 0 12px 8px;
+          opacity: 0; pointer-events: none; transition: opacity .15s;
         }
-        #apt-panel:hover #apt-search { opacity: 1; pointer-events: auto; max-height: 40px; margin-bottom: 8px; padding-top: 7px; padding-bottom: 7px; }
+        #apt-panel:hover #apt-search, #apt-panel:focus-within #apt-search { opacity: 1; pointer-events: auto; }
         #apt-search:focus { border-color: #89b4fa; }
         #apt-search::placeholder { color: #45475a; }
         #apt-list-container { flex: 1; overflow-y: auto; }
@@ -1065,9 +1064,9 @@
       panel.id = 'apt-panel';
       setHTML(panel, `
         <div id="apt-body">
-          <input id="apt-search" placeholder="Search prompts…">
           <div id="apt-list-container"></div>
         </div>
+        <input id="apt-search" placeholder="Search prompts…">
         <div id="apt-header">
           <div id="apt-header-left">
             <button class="apt-icon-btn" id="apt-title" title="Check for update">🚀</button>
@@ -1156,8 +1155,12 @@
       const container = this._shadow.querySelector('#apt-list-container');
       if (!container) return;
 
-      const q = (this._shadow.querySelector('#apt-search')?.value || '').trim().toLowerCase();
+      const searchEl = this._shadow.querySelector('#apt-search');
+      const q = (searchEl?.value || '').trim().toLowerCase();
       const currentUrl = location.href;
+
+      const totalPrompts = this._libraryState.doc.prompts.length;
+      if (searchEl) searchEl.style.display = totalPrompts > 5 ? '' : 'none';
 
       let prompts = this._libraryState.doc.prompts;
       if (q) {
