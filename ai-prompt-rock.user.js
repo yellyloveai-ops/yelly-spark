@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AI Prompt Rock
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
+// @version      2.1.0
 // @description  Load context-aware prompts for any page, test with AI, and sync via GitHub
 // @author       yellyloveai-ops
 // @match        http://*/*
@@ -502,31 +502,32 @@
         #apt-panel * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         #apt-panel {
           position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
-          width: 340px; max-height: 500px; background: #1e1e2e; border-radius: 14px;
+          width: 340px; background: #1e1e2e; border-radius: 14px;
           box-shadow: 0 8px 40px rgba(0,0,0,.5); border: 1px solid #313244;
           display: flex; flex-direction: column;
-          transition: max-height .25s ease, opacity .2s;
         }
-        #apt-panel.collapsed { max-height: 52px; overflow: hidden; }
         #apt-header {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 16px; cursor: move; user-select: none;
+          padding: 10px 12px; cursor: move; user-select: none;
           border-bottom: 1px solid #313244; flex-shrink: 0;
         }
         #apt-header-left { display: flex; align-items: center; gap: 8px; }
         #apt-logo { font-size: 18px; }
         #apt-title { color: #cdd6f4; font-weight: 600; font-size: 14px; }
-        #apt-header-btns { display: flex; gap: 6px; }
+        #apt-header-btns { display: flex; gap: 3px; align-items: center; }
+        .apt-header-sep { width: 1px; height: 14px; background: #313244; margin: 0 3px; flex-shrink: 0; }
         .apt-icon-btn {
           background: none; border: none; cursor: pointer; color: #6c7086;
-          font-size: 16px; padding: 2px 5px; border-radius: 6px; line-height: 1;
+          font-size: 15px; padding: 3px 6px; border-radius: 6px; line-height: 1;
           transition: color .15s, background .15s;
         }
         .apt-icon-btn:hover { color: #cdd6f4; background: #313244; }
         #apt-body {
-          flex: 1; overflow: hidden; display: flex; flex-direction: column;
-          padding: 10px 12px 8px;
+          overflow: hidden; display: flex; flex-direction: column;
+          padding: 10px 12px 8px; max-height: 450px;
+          transition: max-height .25s ease, padding .2s ease, opacity .2s;
         }
+        #apt-body.collapsed { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; }
         #apt-search {
           width: 100%; background: #181825; border: 1px solid #313244;
           border-radius: 8px; color: #cdd6f4; font-size: 12px; padding: 7px 10px;
@@ -536,14 +537,15 @@
         #apt-search:focus { border-color: #89b4fa; }
         #apt-search::placeholder { color: #45475a; }
         #apt-list-container { flex: 1; overflow-y: auto; }
-        #apt-toolbar {
-          display: flex; align-items: center; justify-content: space-around;
-          padding: 8px 12px; border-top: 1px solid #313244; flex-shrink: 0;
+        #apt-restore-pill {
+          position: fixed; bottom: 24px; right: 24px; z-index: 2147483647;
+          background: #1e1e2e; border: 1px solid #313244; border-radius: 20px;
+          padding: 8px 14px; color: #89b4fa; font-size: 13px; font-weight: 600;
+          cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4);
+          display: flex; align-items: center; gap: 6px;
+          transition: background .15s, border-color .15s; user-select: none;
         }
-        .apt-toolbar-btn {
-          flex: 1; font-size: 18px; padding: 6px 0; text-align: center;
-          border-radius: 8px;
-        }
+        #apt-restore-pill:hover { background: #313244; border-color: #89b4fa; }
       `;
     },
 
@@ -967,6 +969,7 @@
       this._setupDraggable();
       this._setupPanelEvents();
       this._renderPromptList();
+      this._checkUrlForConfig();
 
       // Auto-pull from GitHub if cache is stale and credentials are set
       if (!this._storage.hasFreshCache() && this._config.githubOwner && this._config.githubRepo) {
@@ -1005,18 +1008,17 @@
             <span id="apt-title">Prompt Rock</span>
           </div>
           <div id="apt-header-btns">
-            <button class="apt-icon-btn" id="apt-btn-collapse" title="Collapse">—</button>
+            <button class="apt-icon-btn" id="apt-btn-new" title="New prompt">+</button>
+            <button class="apt-icon-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
+            <button class="apt-icon-btn" id="apt-btn-settings" title="Settings">⚙</button>
+            <span class="apt-header-sep"></span>
+            <button class="apt-icon-btn" id="apt-btn-collapse" title="Collapse">▲</button>
             <button class="apt-icon-btn" id="apt-btn-close" title="Close">✕</button>
           </div>
         </div>
         <div id="apt-body">
           <input id="apt-search" placeholder="Search prompts…">
           <div id="apt-list-container"></div>
-        </div>
-        <div id="apt-toolbar">
-          <button class="apt-icon-btn apt-toolbar-btn" id="apt-btn-new" title="New prompt">+</button>
-          <button class="apt-icon-btn apt-toolbar-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
-          <button class="apt-icon-btn apt-toolbar-btn" id="apt-btn-settings" title="Settings">⚙</button>
         </div>
       `);
       return panel;
@@ -1065,16 +1067,19 @@
         this._openSettingsDialog();
       });
 
-      // Collapse button
+      // Collapse button — body slides up (upward direction)
       this._shadow.querySelector('#apt-btn-collapse').addEventListener('click', () => {
-        this._panel.classList.toggle('collapsed');
+        const body = this._shadow.querySelector('#apt-body');
         const btn = this._shadow.querySelector('#apt-btn-collapse');
-        btn.textContent = this._panel.classList.contains('collapsed') ? '□' : '—';
+        const isCollapsed = body.classList.toggle('collapsed');
+        btn.textContent = isCollapsed ? '▼' : '▲';
+        btn.title = isCollapsed ? 'Expand' : 'Collapse';
       });
 
-      // Close button
+      // Close button — hide panel, show restore pill
       this._shadow.querySelector('#apt-btn-close').addEventListener('click', () => {
-        this._host.remove();
+        this._panel.style.display = 'none';
+        this._showRestoreButton();
       });
 
       // Search input
@@ -1348,6 +1353,13 @@
             <input class="apt-field-input" id="apt-sync-token" type="password" placeholder="ghp_…" value="${Utils.escapeHtml(this._config.githubToken)}">
           </div>
           <div id="apt-sync-status" style="color:#6c7086;font-size:12px;margin-top:4px;min-height:18px"></div>
+          <div class="apt-field" style="margin-top:12px">
+            <div class="apt-field-label">Share config <span style="font-weight:400;font-size:11px;color:#6c7086;text-transform:none;letter-spacing:0">(owner/repo/branch/path — no token)</span></div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="apt-field-input" id="apt-sync-sharelink" readonly style="flex:1;font-size:11px;color:#6c7086;cursor:text" placeholder="Enter owner & repo above to generate link">
+              <button class="apt-dbtn" id="apt-sync-copylink" style="background:#f9e2af;color:#1e1e2e;flex-shrink:0;padding:9px 12px;font-size:15px" title="Copy shareable link">🔗</button>
+            </div>
+          </div>
         </div>
         <div class="apt-dialog-footer">
           <button class="apt-dbtn apt-dbtn-cancel" id="apt-sync-close">Close</button>
@@ -1409,6 +1421,33 @@
       });
 
       setTimeout(() => dlg.querySelector('#apt-sync-owner').focus(), 50);
+
+      // Share link — generate from current form values
+      const shareLinkInput = dlg.querySelector('#apt-sync-sharelink');
+      const updateShareLink = () => {
+        const owner = dlg.querySelector('#apt-sync-owner').value.trim();
+        const repo = dlg.querySelector('#apt-sync-repo').value.trim();
+        const branch = dlg.querySelector('#apt-sync-branch').value.trim() || 'main';
+        const path = dlg.querySelector('#apt-sync-path').value.trim() || 'prompts/library.json';
+        if (owner && repo) {
+          const encoded = Utils.b64EncodeUnicode(JSON.stringify({ owner, repo, branch, path }));
+          shareLinkInput.value = `${location.href.split('#')[0]}#apt-cfg=${encoded}`;
+        } else {
+          shareLinkInput.value = '';
+        }
+      };
+      updateShareLink();
+      ['#apt-sync-owner', '#apt-sync-repo', '#apt-sync-branch', '#apt-sync-path'].forEach(id => {
+        dlg.querySelector(id).addEventListener('input', updateShareLink);
+      });
+      dlg.querySelector('#apt-sync-copylink').addEventListener('click', () => {
+        updateShareLink();
+        if (shareLinkInput.value) {
+          navigator.clipboard.writeText(shareLinkInput.value).then(() => this._showToast('Config link copied!'));
+        } else {
+          this._showToast('Enter owner and repo first', 'error');
+        }
+      });
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1797,6 +1836,53 @@
       t.textContent = msg;
       this._shadow.appendChild(t);
       setTimeout(() => t.remove(), 3000);
+    }
+
+    _showRestoreButton() {
+      const pill = document.createElement('div');
+      pill.id = 'apt-restore-pill';
+      setHTML(pill, '<span>⚡</span><span>Prompt Rock</span>');
+      this._shadow.appendChild(pill);
+      pill.addEventListener('click', () => {
+        this._panel.style.display = '';
+        pill.remove();
+      });
+    }
+
+    _checkUrlForConfig() {
+      try {
+        const match = location.hash.match(/apt-cfg=([A-Za-z0-9+/=%_-]+)/);
+        if (!match) return;
+        const cfg = JSON.parse(Utils.b64DecodeUnicode(decodeURIComponent(match[1])));
+        if (!cfg.owner || !cfg.repo) return;
+        this._showConfigImportBanner(cfg);
+        const cleaned = location.href.replace(/#apt-cfg=[^&#]+/, '').replace(/#$/, '');
+        history.replaceState(null, '', cleaned);
+      } catch {
+        // ignore invalid config in URL
+      }
+    }
+
+    _showConfigImportBanner(cfg) {
+      const banner = document.createElement('div');
+      banner.className = 'apt-toast';
+      banner.style.cssText = `
+        background:#89b4fa; color:#1e1e2e; max-width:300px; width:auto;
+        text-align:center; cursor:pointer; pointer-events:auto;
+        white-space:normal; line-height:1.5;
+      `;
+      setHTML(banner, `Import GitHub config<br><strong>${Utils.escapeHtml(cfg.owner)}/${Utils.escapeHtml(cfg.repo)}</strong><br><small style="opacity:.8">Click to confirm</small>`);
+      this._shadow.appendChild(banner);
+      banner.addEventListener('click', () => {
+        if (cfg.owner) this._config.githubOwner = cfg.owner;
+        if (cfg.repo) this._config.githubRepo = cfg.repo;
+        if (cfg.branch) this._config.githubBranch = cfg.branch;
+        if (cfg.path) this._config.githubPath = cfg.path;
+        banner.style.background = '#a6e3a1';
+        banner.textContent = 'GitHub config imported! ✓';
+        setTimeout(() => banner.remove(), 2000);
+      });
+      setTimeout(() => { if (banner.parentNode) banner.remove(); }, 10000);
     }
   }
 
