@@ -1020,6 +1020,13 @@
       this._checkUrlForConfig();
       console.log('[APR] panel setup complete');
 
+      // Apply persisted minimized state — minimized by default
+      const isMinimized = Utils.safeLocalGet('apt_panel_minimized', true);
+      if (isMinimized) {
+        this._panel.style.display = 'none';
+        this._showRestoreButton();
+      }
+
       // Auto-pull from GitHub if cache is stale and credentials are set
       if (!this._storage.hasFreshCache() && this._config.githubOwner && this._config.githubRepo) {
         this._storage.pullFromGitHub().then(state => {
@@ -1118,6 +1125,7 @@
       // Minimize button — hide panel, show restore pill
       this._shadow.querySelector('#apt-btn-close').addEventListener('click', () => {
         this._panel.style.display = 'none';
+        Utils.safeLocalSet('apt_panel_minimized', true);
         this._showRestoreButton();
       });
 
@@ -1884,6 +1892,7 @@
       this._shadow.appendChild(pill);
       pill.addEventListener('click', () => {
         this._panel.style.display = '';
+        Utils.safeLocalSet('apt_panel_minimized', false);
         pill.remove();
       });
     }
