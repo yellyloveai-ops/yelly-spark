@@ -1016,7 +1016,6 @@
             <button class="apt-icon-btn" id="apt-btn-sync" title="GitHub sync">⇅</button>
             <button class="apt-icon-btn" id="apt-btn-settings" title="Settings">⚙</button>
             <span class="apt-header-sep"></span>
-            <button class="apt-icon-btn" id="apt-btn-collapse" title="Collapse">▼</button>
             <button class="apt-icon-btn" id="apt-btn-close" title="Minimize">−</button>
           </div>
         </div>
@@ -1026,11 +1025,12 @@
 
     _setupDraggable() {
       const header = this._panel.querySelector('#apt-header');
-      let ox = 0, oy = 0, dragging = false;
+      let ox = 0, oy = 0, dragging = false, moved = false;
 
       header.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('apt-icon-btn')) return;
         dragging = true;
+        moved = false;
         const r = this._panel.getBoundingClientRect();
         ox = e.clientX - r.left;
         oy = e.clientY - r.top;
@@ -1044,11 +1044,19 @@
 
       window.addEventListener('mousemove', (e) => {
         if (!dragging) return;
+        moved = true;
         this._panel.style.left = (e.clientX - ox) + 'px';
         this._panel.style.top = (e.clientY - oy) + 'px';
       }, true);
 
       window.addEventListener('mouseup', () => { dragging = false; }, true);
+
+      // Click header (without dragging) to toggle collapsed body
+      header.addEventListener('click', (e) => {
+        if (e.target.classList.contains('apt-icon-btn')) return;
+        if (moved) { moved = false; return; }
+        this._shadow.querySelector('#apt-body').classList.toggle('collapsed');
+      });
     }
 
     _setupPanelEvents() {
@@ -1065,15 +1073,6 @@
       // Settings button
       this._shadow.querySelector('#apt-btn-settings').addEventListener('click', () => {
         this._openSettingsDialog();
-      });
-
-      // Collapse button — body slides down toward header (header stays at bottom)
-      this._shadow.querySelector('#apt-btn-collapse').addEventListener('click', () => {
-        const body = this._shadow.querySelector('#apt-body');
-        const btn = this._shadow.querySelector('#apt-btn-collapse');
-        const isCollapsed = body.classList.toggle('collapsed');
-        btn.textContent = isCollapsed ? '▲' : '▼';
-        btn.title = isCollapsed ? 'Expand' : 'Collapse';
       });
 
       // Minimize button — hide panel, show restore pill
