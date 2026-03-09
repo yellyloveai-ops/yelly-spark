@@ -1,0 +1,13 @@
+{
+  "urlPatterns": [
+    { "pattern": "*github.com/*/pull/*",   "tools": ["ReadFile", "SearchCode"] },
+    { "pattern": "*github.com/*/issues/*", "tools": ["ReadFile", "SearchCode"] }
+  ],
+  "keywords": [
+    { "keyword": "pull request", "tools": ["ReadFile", "SearchCode"] },
+    { "keyword": "ticket",       "tools": ["ReadTicket", "UpdateTicket"] },
+    { "keyword": "test",         "tools": ["RunTests"] },
+    { "keyword": "build",        "tools": ["RunBuild"] },
+    { "keyword": "deploy",       "tools": ["GetDeploymentStatus"] }
+  ]
+}
