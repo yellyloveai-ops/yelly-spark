@@ -8,14 +8,14 @@ Tampermonkey / Greasemonkey user scripts.
 
 > Load context-aware prompts for any page, test with AI, and sync via GitHub — all from a floating panel.
 
-[![Install](https://img.shields.io/badge/Install-AI%20Prompt%20Rock-blue?style=for-the-badge&logo=tampermonkey)](https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js)
+[![Install](https://img.shields.io/badge/Install-AI%20Prompt%20Rock-blue?style=for-the-badge&logo=tampermonkey)](https://raw.githubusercontent.com/yellyloveai-ops/yelly-spark/main/ai-prompt-rock.user.js)
 
 **Version:** 2.1.0 · **License:** Apache-2.0
 
 ### Install
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/) (Chrome / Firefox / Safari / Edge)
-2. Click the **Install** button above, or [click here to install directly](https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js)
+2. Click the **Install** button above, or [click here to install directly](https://raw.githubusercontent.com/yellyloveai-ops/yelly-spark/main/ai-prompt-rock.user.js)
 3. Tampermonkey will open an install dialog — click **Install**
 
 ### Features

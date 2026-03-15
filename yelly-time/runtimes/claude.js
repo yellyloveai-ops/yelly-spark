@@ -29,7 +29,7 @@ function buildClaudeArgs(prompt, interactive, tools, model, systemPromptFile) {
 /**
  * Resolve a system prompt file from the agents/ directory.
  * @param {string|null} agentName
- * @param {string}      repoRoot   path to the userscripts repo root
+ * @param {string}      repoRoot   path to the yelly-spark repo root
  * @returns {string|null}          absolute path or null if not found
  */
 function resolveSystemPrompt(agentName, repoRoot) {

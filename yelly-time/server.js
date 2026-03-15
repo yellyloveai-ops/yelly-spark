@@ -33,7 +33,8 @@ function parseArgs() {
     INTERACTIVE_MODE: has('--interactive'),
     SCHEDULE_REPO:    get('--repo',       process.env.YELLYTIME_SCHEDULE_REPO  || null),
     ALIAS:            get('--alias',      process.env.YELLYTIME_ALIAS          || os.userInfo().username),
-    SESSION_DIR:      get('--session-dir', process.env.YELLYTIME_SESSION_DIR   || path.join(os.homedir(), '.yelly-time', 'sessions')),
+    SESSION_DIR:      get('--session-dir',   process.env.YELLYTIME_SESSION_DIR   || path.join(os.homedir(), '.yelly-time', 'sessions')),
+    SCHEDULE_DIR:     get('--schedule-dir',  process.env.YELLYTIME_SCHEDULE_DIR  || path.join(os.homedir(), '.yelly-time', 'schedules')),
     TRUST_TOOLS:      get('--trust-tools', ''),
     REPO_ROOT:        path.resolve(__dirname, '..'),
   };
@@ -127,9 +128,10 @@ async function start() {
 
   // 7. Session + schedule config
   sessionStore.setSessionDir(cfg.SESSION_DIR);
+  scheduleStore.setLocalDir(cfg.SCHEDULE_DIR);
+  scheduleStore.setAlias(cfg.ALIAS);
   if (cfg.SCHEDULE_REPO) {
     scheduleStore.setScheduleRepo(cfg.SCHEDULE_REPO);
-    scheduleStore.setAlias(cfg.ALIAS);
   }
 
   // 8. Rate limit state
@@ -171,11 +173,9 @@ async function start() {
     );
   }, 30_000);
 
-  // 12. Load schedules
-  if (cfg.SCHEDULE_REPO) {
-    try { await scheduleStore.loadSchedules(); }
-    catch (err) { console.warn(`[server] Failed to load schedules: ${err.message}`); }
-  }
+  // 12. Load schedules (always — from local dir, or git repo if configured)
+  try { await scheduleStore.loadSchedules(); }
+  catch (err) { console.warn(`[server] Failed to load schedules: ${err.message}`); }
 
   // 13. Listen
   server.listen(cfg.PORT, '127.0.0.1', () => {
@@ -184,7 +184,7 @@ async function start() {
     if (cfg.MODEL)  console.log(`[YellyTime] Model:      ${cfg.MODEL}`);
     console.log(`[YellyTime] Work dir:   ${WORK_DIR}`);
     console.log(`[YellyTime] Allowed:    ${ALLOWED_DOMAINS.join(', ')}`);
-    if (cfg.SCHEDULE_REPO) console.log(`[YellyTime] Schedules:  ${scheduleStore.getScheduleFilePath()}`);
+    console.log(`[YellyTime] Schedules:  ${scheduleStore.getLocalScheduleFilePath()}${cfg.SCHEDULE_REPO ? ` (git → ${scheduleStore.getScheduleFilePath()})` : ''}`);
     console.log(`[YellyTime] Runtimes:`);
     for (const [name, info] of Object.entries(runtimeAvailability)) {
       const mark = info.available ? '✓' : '✗';

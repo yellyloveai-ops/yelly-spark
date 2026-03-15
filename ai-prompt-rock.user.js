@@ -13,8 +13,8 @@
 // @connect      api.openai.com
 // @connect      api.github.com
 // @run-at       document-end
-// @downloadURL  https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js
-// @updateURL    https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js
+// @downloadURL  https://raw.githubusercontent.com/yellyloveai-ops/yelly-spark/main/ai-prompt-rock.user.js
+// @updateURL    https://raw.githubusercontent.com/yellyloveai-ops/yelly-spark/main/ai-prompt-rock.user.js
 // @license      Apache-2.0
 // ==/UserScript==
 
@@ -1185,7 +1185,7 @@
       // Rocket icon — open the @downloadURL so Tampermonkey can offer an update
       this._shadow.querySelector('#apt-title').addEventListener('click', () => {
         const downloadURL = (typeof GM_info !== 'undefined' && GM_info.script?.downloadURL)
-          || 'https://raw.githubusercontent.com/yellyloveai-ops/userscripts/main/ai-prompt-rock.user.js';
+          || 'https://raw.githubusercontent.com/yellyloveai-ops/yelly-spark/main/ai-prompt-rock.user.js';
         window.open(downloadURL, '_blank');
         this._showToast('Opening update page…');
       });

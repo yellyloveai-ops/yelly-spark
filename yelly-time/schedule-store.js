@@ -1,8 +1,9 @@
 'use strict';
-// schedule-store.js — Schedule CRUD, YAML git persistence, tick logic
+// schedule-store.js — Schedule CRUD, YAML local+git persistence, tick logic
 
 const fs           = require('fs');
 const path         = require('path');
+const os           = require('os');
 const { execSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
@@ -14,7 +15,8 @@ const scheduledTasks = new Map();
 /** @type {Map<string, number>} cooldown: scheduleId → last manual run timestamp */
 const scheduleCooldowns = new Map();
 
-let _scheduleRepo  = null;  // git repo root path
+let _localDir      = path.join(os.homedir(), '.yelly-time', 'schedules'); // always-on local save
+let _scheduleRepo  = null;  // optional git repo root path for commit+push
 let _alias         = 'user';
 let _scheduleCounter = 0;
 
@@ -40,9 +42,16 @@ const INTERVAL_MS = {
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
+function setLocalDir(dir)          { _localDir = dir; }
 function setScheduleRepo(repoPath) { _scheduleRepo = repoPath; }
 function setAlias(alias)           { _alias = alias; }
 
+/** Path used for always-on local persistence */
+function getLocalScheduleFilePath() {
+  return path.join(_localDir, `${_alias}.yaml`);
+}
+
+/** Path inside the git repo (if set); used for optional git commit+push */
 function getScheduleFilePath() {
   if (!_scheduleRepo) return null;
   return path.join(_scheduleRepo, 'schedules', `${_alias}.yaml`);
@@ -259,50 +268,61 @@ function restoreNextRunAt(schedule) {
 }
 
 // ---------------------------------------------------------------------------
-// Git-backed persistence
+// Persistence — local folder (always) + optional git commit+push
 // ---------------------------------------------------------------------------
 async function saveSchedules() {
-  const file = getScheduleFilePath();
-  if (!file) return; // in-memory only
+  const yaml    = serializeSchedules();
+  const localFile = getLocalScheduleFilePath();
 
-  const dir = path.dirname(file);
-  fs.mkdirSync(dir, { recursive: true });
+  // 1. Always write to local dir
+  fs.mkdirSync(path.dirname(localFile), { recursive: true });
+  fs.writeFileSync(localFile, yaml, 'utf8');
 
-  try {
-    execSync('git pull --rebase', { cwd: _scheduleRepo, stdio: 'pipe' });
-  } catch (err) {
-    console.warn(`[scheduler] git pull failed: ${err.message}`);
-  }
-
-  fs.writeFileSync(file, serializeSchedules(), 'utf8');
-
-  try {
-    execSync(`git add "${file}"`, { cwd: _scheduleRepo, stdio: 'pipe' });
-    execSync(`git commit -m "yellytime: update schedules for ${_alias}"`, { cwd: _scheduleRepo, stdio: 'pipe' });
-    execSync('git push', { cwd: _scheduleRepo, stdio: 'pipe' });
-  } catch (err) {
-    console.warn(`[scheduler] git push failed: ${err.message}`);
+  // 2. Optionally commit+push to git repo
+  if (_scheduleRepo) {
+    const gitFile = getScheduleFilePath();
+    try {
+      execSync('git pull --rebase', { cwd: _scheduleRepo, stdio: 'pipe' });
+    } catch (err) {
+      console.warn(`[scheduler] git pull failed: ${err.message}`);
+    }
+    fs.mkdirSync(path.dirname(gitFile), { recursive: true });
+    fs.writeFileSync(gitFile, yaml, 'utf8');
+    try {
+      execSync(`git add "${gitFile}"`, { cwd: _scheduleRepo, stdio: 'pipe' });
+      execSync(`git commit -m "yellytime: update schedules for ${_alias}"`, { cwd: _scheduleRepo, stdio: 'pipe' });
+      execSync('git push', { cwd: _scheduleRepo, stdio: 'pipe' });
+    } catch (err) {
+      console.warn(`[scheduler] git push failed: ${err.message}`);
+    }
   }
 }
 
 async function loadSchedules() {
-  const file = getScheduleFilePath();
-  if (!file || !fs.existsSync(file)) return;
+  let yaml;
 
-  try {
-    execSync('git pull --rebase', { cwd: _scheduleRepo, stdio: 'pipe' });
-  } catch (err) {
-    console.warn(`[scheduler] git pull on load failed: ${err.message}`);
+  if (_scheduleRepo) {
+    // Git repo takes precedence — pull then read from repo file
+    const gitFile = getScheduleFilePath();
+    try {
+      execSync('git pull --rebase', { cwd: _scheduleRepo, stdio: 'pipe' });
+    } catch (err) {
+      console.warn(`[scheduler] git pull on load failed: ${err.message}`);
+    }
+    if (fs.existsSync(gitFile)) {
+      try { yaml = fs.readFileSync(gitFile, 'utf8'); } catch { /* fall through */ }
+    }
   }
 
-  let yaml;
-  try {
-    yaml = fs.readFileSync(file, 'utf8');
-  } catch { return; }
+  // Fall back to local file
+  if (!yaml) {
+    const localFile = getLocalScheduleFilePath();
+    if (!fs.existsSync(localFile)) return;
+    try { yaml = fs.readFileSync(localFile, 'utf8'); } catch { return; }
+  }
 
   const parsed = parseScheduleYaml(yaml);
   for (const raw of parsed) {
-    // Restore interval counter
     const numId = parseInt(raw.id.replace('sched_', ''), 10);
     if (numId > _scheduleCounter) _scheduleCounter = numId;
 
@@ -325,8 +345,10 @@ async function loadSchedules() {
 module.exports = {
   scheduledTasks,
   scheduleCooldowns,
+  setLocalDir,
   setScheduleRepo,
   setAlias,
+  getLocalScheduleFilePath,
   getScheduleFilePath,
   createSchedule,
   updateSchedule,
